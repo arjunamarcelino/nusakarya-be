@@ -39,13 +39,38 @@ const fastify = Fastify({
 
 // REGISTER CORS
 fastify.register(cors, {
-  origin: [
-    'http://localhost:3000',
-    'https://site-nusakarya.jsuysj.easypanel.host',
-    'https://nusakarya.vercel.app',
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: (origin, cb) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://site-nusakarya.jsuysj.easypanel.host',
+      'https://nusakarya.vercel.app',
+    ]
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return cb(null, true)
+    }
+
+    // Normalize origin by removing trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, '')
+
+    // Find matching allowed origin
+    const matchedOrigin = allowedOrigins.find(allowed => {
+      const normalizedAllowed = allowed.replace(/\/$/, '')
+
+      return normalizedOrigin === normalizedAllowed || origin === allowed
+    })
+
+    if (matchedOrigin) {
+      // Return the matched origin (or the original if exact match)
+      return cb(null, origin === matchedOrigin ? origin : matchedOrigin)
+    }
+
+    return cb(new Error('Not allowed by CORS'), false)
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
 })
 
 // REGISTER JSON RESPONSE HELPER
