@@ -36,6 +36,31 @@ export default class KaryaController {
         return reply.json(null, 409, 'FILE_HASH_EXISTS', 'A karya with this file hash already exists')
       }
 
+      // Always override nftId with auto-incremented value
+      // Find the highest numeric nftId
+      const allKarya = await Prisma.karya.findMany({
+        where: {
+          nftId: {
+            not: null,
+          },
+        },
+        select: {
+          nftId: true,
+        },
+      })
+
+      // Extract numeric values from nftId and find the maximum
+      const numericIds = allKarya
+        .map((k) => {
+          const num = Number.parseInt(k.nftId || '0', 10)
+
+          return Number.isNaN(num) ? 0 : num
+        })
+        .filter((id) => id > 0)
+
+      const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0
+      const finalNftId = String(maxId + 1)
+
       // Create karya using service
       const karya = await KaryaService.create({
         userId: user.id,
@@ -46,7 +71,7 @@ export default class KaryaController {
         tag,
         fileUrl,
         fileHash,
-        nftId,
+        nftId: finalNftId,
         txHash,
       })
 
