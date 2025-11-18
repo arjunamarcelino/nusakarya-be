@@ -39,7 +39,11 @@ const fastify = Fastify({
 
 // REGISTER CORS
 fastify.register(cors, {
-  origin: 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'https://site-nusakarya.jsuysj.easypanel.host',
+    'https://nusakarya.vercel.app',
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 })
