@@ -14,6 +14,10 @@ export default function (app: FastifyInstance, _: FastifyPluginOptions, done: Do
     preHandler: verifyPrivyToken,
   }, KaryaController.getAll)
 
+  app.post('/karya/verify', {
+    schema: KaryaSchema.verify,
+  }, KaryaController.verify)
+
   done()
 }
 

@@ -1,4 +1,4 @@
-import { FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import Prisma from '#prisma/prisma'
 import { AuthenticatedRequest } from '#app/middlewares/auth_middleware'
 import KaryaService from '#app/modules/karya/karya_service'
@@ -103,6 +103,74 @@ export default class KaryaController {
       }
 
       return reply.json(null, 500, 'SYSTEM_ERROR', 'Failed to retrieve karya')
+    }
+  }
+
+  /**
+   * Verify karya by fileHash
+   * POST /v1/karya/verify
+   */
+  static async verify(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const body = request.body as { hash: string }
+      const { hash } = body
+
+      if (!hash) {
+        return reply.json(null, 400, 'VALIDATION_ERROR', 'Hash is required')
+      }
+
+      // Find karya by fileHash with all related data
+      const karya = await Prisma.karya.findFirst({
+        where: { fileHash: hash },
+        include: {
+          user: {
+            select: {
+              id: true,
+              privyId: true,
+              walletAddress: true,
+              email: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          licenses: true,
+        },
+      })
+
+      if (!karya) {
+        return reply.json(null, 404, 'KARYA_NOT_FOUND', 'Karya with this hash does not exist')
+      }
+
+      return reply.json(
+        {
+          karya: {
+            id: karya.id,
+            userId: karya.userId,
+            title: karya.title,
+            description: karya.description,
+            type: karya.type,
+            category: karya.category,
+            tag: karya.tag,
+            fileUrl: karya.fileUrl,
+            fileHash: karya.fileHash,
+            nftId: karya.nftId,
+            txHash: karya.txHash,
+            createdAt: karya.createdAt,
+            updatedAt: karya.updatedAt,
+            user: karya.user,
+            licenses: karya.licenses,
+          },
+        },
+        200,
+        null,
+        'Karya found successfully'
+      )
+    } catch (error) {
+      if (error instanceof Error) {
+        return reply.json(null, 500, 'SYSTEM_ERROR', error.message)
+      }
+
+      return reply.json(null, 500, 'SYSTEM_ERROR', 'Failed to verify karya')
     }
   }
 }

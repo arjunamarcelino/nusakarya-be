@@ -94,5 +94,37 @@ export default class KaryaService {
       updatedAt: karya.updatedAt,
     }))
   }
+
+  /**
+   * Find karya by fileHash with all related data
+   */
+  static async findByFileHash(fileHash: string): Promise<KaryaResponse | null> {
+    const karya = await Prisma.karya.findFirst({
+      where: { fileHash },
+      include: {
+        user: true,
+        licenses: true,
+      },
+    })
+
+    if (!karya) {
+      return null
+    }
+
+    return {
+      id: karya.id,
+      title: karya.title,
+      description: karya.description,
+      type: karya.type,
+      category: karya.category,
+      tag: karya.tag,
+      fileUrl: karya.fileUrl,
+      fileHash: karya.fileHash,
+      nftId: karya.nftId,
+      txHash: karya.txHash,
+      createdAt: karya.createdAt,
+      updatedAt: karya.updatedAt,
+    }
+  }
 }
 
